@@ -3,7 +3,8 @@
 ### Usage
 Given a csv file with RPNs,  
 - Run ```./rpn.rb -f <csv file>``` to see default output file ```rpn.csv```
-- Usage```./rpn.rb --help```
+- ```-o``` can be use to specify an output file
+- Usage```./rpn.rb --help``` 
 
 ### Solutions 
 Since it involves ```RPN```, the 1st impression is that it needs some ```Stack```. Since there are multiple RPN and could have references inside RPN, it will need ```Hash``` for looking up other cells. And it might need ```recuisive function call``` when there is a reference.
@@ -17,6 +18,7 @@ Since it involves ```RPN```, the 1st impression is that it needs some ```Stack``
 
 #### Ruby implementations
 1. In Rudy the array of array can have varied size of array. So ```Hash``` is not used.
+2. In Ruby the ```Array``` can be used as a ```Stack```.
 
 ### Assumptions
 1. if the reference cell is a valid CSV cell, but it does not exist in the csv file. In this case, assume the value is '#ERR'
