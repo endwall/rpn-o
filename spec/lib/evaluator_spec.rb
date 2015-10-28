@@ -76,7 +76,19 @@ describe Evaluator do
     context 'when there is a single reference which is not valid' do
       let(:tokens) { ["b"] }
       let(:cell_array) {
-        [[["2", "b", "-"], ["-", "2", "12"], ["*", "3", "a1"]]]
+        [[["-", "b", "2"], ["-", "2", "12"], ["*", "3", "a1"]]]
+      }
+
+      it 'should return #ERR' do
+        allow(subject).to receive(:cell_array).and_return(cell_array)
+        expect(subject.process_token(tokens)).to eq('#ERR')
+      end
+    end
+
+    context 'when it is divided by 0' do
+      let(:tokens) { ["/", "0", "2"] }
+      let(:cell_array) {
+        [[["/", "0", "2"], ["-", "2", "12"], ["*", "3", "a1"]]]
       }
 
       it 'should return #ERR' do

@@ -1,7 +1,7 @@
 class Evaluator
   def initialize(input_file, output_file='')
     @input_file = input_file
-    @output_file = output_file.nil? ? "#{input_file}.output" : output_file
+    @output_file = output_file.nil? || output_file.empty? ? "rpn.csv" : output_file
   end
 
   def run
@@ -91,7 +91,7 @@ class Evaluator
   end
 
   def output
-    File.open("#{@input_file}.result", 'w+') do |f|
+    File.open("#{@output_file}", 'w+') do |f|
       cell_array.each do |tokens|
         tokens.flatten!
         tokens.map!{|t| "#{t}" =~ /^[-+]?[0-9]*\.?0+$/ ? t.to_i : t}
