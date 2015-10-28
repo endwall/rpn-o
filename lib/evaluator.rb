@@ -24,13 +24,20 @@ class Evaluator
       when /^[-+]?[0-9]*\.?[0-9]+$/
         calc_stack.push(elem.to_f)
       when /^([a-z])(\d+)$/
-        calc_stack.push(fetch_or_process(Regexp.last_match))
+        r = fetch_or_process(Regexp.last_match)
+        calc_stack.push(r)
+        break if r == '#ERR'
       else
         calc_stack.push('#ERR')
         break
       end
     end
-    calc_stack.size == 1 ? tokens.push(calc_stack.last) : tokens.push('#ERR')
+    if calc_stack.size == 1 && tokens.last.nil?
+      tokens.push(calc_stack.last)
+    else
+      tokens.pop until tokens.last.nil?
+      tokens.push('#ERR')
+    end
     tokens.last
   end
 
@@ -74,7 +81,9 @@ class Evaluator
   def fetch_or_process(last_match)
     row = last_match[2].to_i - 1
     col = last_match[1].ord - 'a'.ord
-    if cell_array[row][col].size == 1
+    if cell_array[row].nil? || cell_array[row][col].nil?
+      '#ERR'
+    elsif cell_array[row][col].size == 1
       cell_array[row][col][0]
     else
       process_token(cell_array[row][col])

@@ -2,30 +2,128 @@ require 'spec_helper'
 require 'tempfile'
 
 describe Evaluator do
-  let(:input_csv) { Tempfile.new(['test', '.csv']) }
+  let(:input_csv) { './spec/fixtures/test.csv' }
   subject { described_class.new input_csv }
-  describe '#cleanup' do
-    before do
-      input_csv.write(content)
-      input_csv.flush
-      input_csv.close
-    end
 
-    after do
-      input_csv.close
+  describe '#cell_array' do
+    context 'when there is extra space in csv file' do
+
+      let(:tokens) { [[["-", "2", "12"], ["*", "3", "a1"]]] }
+
+      it 'should return the right result' do
+        expect(subject.send(:cell_array)).to eq(tokens)
+      end
     end
   end
 
-  describe '.process_token' do
-    context 'when it is a single expression' do
-      let(:content) do
-        <<END_OF_CSV
-10 2 -
-END_OF_CSV
-      end
+  describe '#process_token' do
+    let(:cell_array) {
+      [[["-", "2", "12"], ["*", "3", "a1"]]]
+    }
 
-      it 'it should return the right result' do
-        expect(subject.process_token(token))
+    context 'when it is a number' do
+      let(:tokens) { ["12"] }
+
+      it 'should return 12.0' do
+        expect(subject.process_token(tokens)).to eq(12)
+      end
+    end
+
+    context 'when it is operator' do
+      let(:tokens) { ["+"] }
+
+      it 'should return #ERR' do
+        expect(subject.process_token(tokens)).to eq('#ERR')
+      end
+    end
+
+    context 'when there is a reference expression' do
+      let(:tokens) { ["*", "3", "a1"] }
+      let(:cell_array) {
+        [[["-", "2", "12"], ["*", "3", "a1"]]]
+      }
+
+      it 'should return 30' do
+        allow(subject).to receive(:cell_array).and_return(cell_array)
+        expect(subject.process_token(tokens)).to eq(30)
+      end
+    end
+
+    context 'when there is a single reference' do
+      let(:tokens) { ["a1"] }
+      let(:cell_array) {
+        [[["-", "2", "12"], ["*", "3", "a1"], ["a1"]]]
+      }
+
+      it 'should return 10' do
+        allow(subject).to receive(:cell_array).and_return(cell_array)
+        expect(subject.process_token(tokens)).to eq(10)
+      end
+    end
+
+    context 'when there is a single reference which does not exists' do
+      let(:tokens) { ["b2"] }
+      let(:cell_array) {
+        [[["b2"], ["-", "2", "12"], ["*", "3", "a1"]]]
+      }
+
+      it 'should return #ERR' do
+        allow(subject).to receive(:cell_array).and_return(cell_array)
+        expect(subject.process_token(tokens)).to eq('#ERR')
+      end
+    end
+
+    context 'when there is a single reference which is not valid' do
+      let(:tokens) { ["b"] }
+      let(:cell_array) {
+        [[["2", "b", "-"], ["-", "2", "12"], ["*", "3", "a1"]]]
+      }
+
+      it 'should return #ERR' do
+        allow(subject).to receive(:cell_array).and_return(cell_array)
+        expect(subject.process_token(tokens)).to eq('#ERR')
+      end
+    end
+
+  end
+
+  describe "#run" do
+    context 'when there are multiple cells' do
+      let(:cell_array) {
+        [[["/", "2", "12"], ["*", "3", "a1"], ["a1"]]]
+      }
+      let(:result) {
+        [[6, 18, 6]]
+      }
+      it 'should return 3 valid numbers' do
+        allow(subject).to receive(:cell_array).and_return(cell_array)
+        expect(subject.run).to eq(result)
+      end
+    end
+
+    context 'when there are multiple cells and error' do
+      let(:cell_array) {
+        [[["+", "2", "12"], ["*", "3", "a1"], ["b2"]]]
+      }
+      let(:result) {
+        [[14, 42, '#ERR']]
+      }
+      it 'should return 3 valid numbers' do
+        allow(subject).to receive(:cell_array).and_return(cell_array)
+        expect(subject.run).to eq(result)
+      end
+    end
+
+    context 'when there are multiple cells and error simbol' do
+      let(:cell_array) {
+        [[["-", "12", "2"], ["*", "3", "a"]]]
+      }
+      let(:result) {
+        [[-10, '#ERR']]
+      }
+      it 'should return 3 valid numbers' do
+        allow(subject).to receive(:cell_array).and_return(cell_array)
+        expect(subject.run).to eq(result)
       end
     end
   end
