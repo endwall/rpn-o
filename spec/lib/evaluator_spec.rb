@@ -6,7 +6,7 @@ describe Evaluator do
   subject { described_class.new input_csv }
 
   describe '#cell_array' do
-    context 'when there is extra space in csv file' do
+    context 'when there are extra spaces in csv file' do
 
       let(:tokens) { [[["-", "2", "12"], ["*", "3", "a1"]]] }
 
@@ -29,7 +29,7 @@ describe Evaluator do
       end
     end
 
-    context 'when it is operator' do
+    context 'when it is a single operator' do
       let(:tokens) { ["+"] }
 
       it 'should return #ERR' do
@@ -82,6 +82,18 @@ describe Evaluator do
       it 'should return #ERR' do
         allow(subject).to receive(:cell_array).and_return(cell_array)
         expect(subject.process_token(tokens)).to eq('#ERR')
+      end
+    end
+
+    context 'when there is an empty cell' do
+      let(:tokens) { [] }
+      let(:cell_array) {
+        [[["-", "b", "2"], ["-", "2", "12"], []]]
+      }
+
+      it 'should return 0' do
+        allow(subject).to receive(:cell_array).and_return(cell_array)
+        expect(subject.process_token(tokens)).to eq(0)
       end
     end
 
@@ -138,5 +150,19 @@ describe Evaluator do
         expect(subject.run).to eq(result)
       end
     end
+
+    context 'when there are multiple cells and error simbol' do
+      let(:cell_array) {
+        [[["-", "12", "2"], ["*", "3", "a"]]]
+      }
+      let(:result) {
+        [[-10, '#ERR']]
+      }
+      it 'should return 3 valid numbers' do
+        allow(subject).to receive(:cell_array).and_return(cell_array)
+        expect(subject.run).to eq(result)
+      end
+    end
+
   end
 end
