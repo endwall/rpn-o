@@ -25,5 +25,6 @@ Since it involves ```RPN```, the 1st impression is that it needs some ```Stack``
 
 ### Test
 1. Ruby rspec with 100% coverage
+2. Test under ruby 2.2.0
 
 
