@@ -1,7 +1,7 @@
 class Evaluator
   def initialize(input_file, output_file='')
     @input_file = input_file
-    @output_file = output_file.nil? || output_file.empty? ? "rpn.csv" : output_file
+    @output_file = output_file.nil? || output_file.empty? ? 'rpn.csv' : output_file
   end
 
   def run
