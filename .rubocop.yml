@@ -1,0 +1,17 @@
+Style/SpaceInsideBrackets:
+  Enabled: false
+
+Metrics/LineLength:
+  Max: 120
+
+Style/SpaceBeforeBlockBraces:
+  Enabled: false
+
+Style/SpaceInsideBlockBraces:
+  Enabled: false
+
+Style/SpaceAroundEqualsInParameterDefault:
+  EnforcedStyle: no_space
+
+Style/Documentation:
+  Enabled: false
