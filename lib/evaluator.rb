@@ -33,7 +33,6 @@ class Evaluator
         break
       end
     end
-    ref_hash = {}
     if calc_stack.size == 1 && tokens.last.nil?
       tokens.push(calc_stack.last)
     else
