@@ -7,13 +7,14 @@ class Evaluator
   def run
     cell_array.each do |tokens|
       tokens.each do |token|
-        process_token(token)
+        value = process_token(copy_of_token(token), {})
+        token.clear << value
       end
     end
     output
   end
 
-  def process_token(tokens)
+  def process_token(tokens, ref_hash)
     calc_stack = []
     tokens.push(0) if tokens.empty?
     until tokens.last.nil?
@@ -24,7 +25,7 @@ class Evaluator
       when /^[-+]?[0-9]*\.?[0-9]+$/
         calc_stack.push(elem.to_f)
       when /^([a-z])(\d+)$/
-        r = fetch_or_process(Regexp.last_match)
+        r = fetch_or_process(Regexp.last_match, ref_hash)
         calc_stack.push(r)
         break if r == '#ERR'
       else
@@ -32,6 +33,7 @@ class Evaluator
         break
       end
     end
+    ref_hash = {}
     if calc_stack.size == 1 && tokens.last.nil?
       tokens.push(calc_stack.last)
     else
@@ -78,15 +80,32 @@ class Evaluator
     end
   end
 
-  def fetch_or_process(last_match)
+  def fetch_or_process(last_match, ref_hash)
     row = last_match[2].to_i - 1
     col = last_match[1].ord - 'a'.ord
     if cell_array[row].nil? || cell_array[row][col].nil?
       '#ERR'
-    elsif cell_array[row][col].size == 1
+    elsif valid_cell_value?(cell_array[row][col])
       cell_array[row][col][0]
     else
-      process_token(cell_array[row][col])
+      if ref_hash.has_key?(last_match[0])
+        '#ERR'
+      else
+        ref_hash[last_match[0]] = 1
+        process_token(copy_of_token(cell_array[row][col]), ref_hash)
+      end
+    end
+  end
+
+  def valid_cell_value?(t)
+    t.size == 1 && (t[0] == '#ERR' || "#{t[0]}" =~ /^[-+]?[0-9]*\.?[0-9]+$/)
+  end
+
+  def copy_of_token(token)
+    [].tap do |result|
+      token.each do |t|
+        result << t
+      end
     end
   end
 

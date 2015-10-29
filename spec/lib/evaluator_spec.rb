@@ -17,12 +17,13 @@ describe Evaluator do
 
   describe '#process_token' do
     let(:cell_array) { [[['-', '2', '12'], ['*', '3', 'a1']]] }
+    let(:ref_hash) { {} }
 
     context 'when it is a number' do
       let(:tokens) { ['12'] }
 
       it 'should return 12.0' do
-        expect(subject.process_token(tokens)).to eq(12)
+        expect(subject.process_token(tokens, ref_hash)).to eq(12)
       end
     end
 
@@ -30,7 +31,7 @@ describe Evaluator do
       let(:tokens) { ['+'] }
 
       it 'should return #ERR' do
-        expect(subject.process_token(tokens)).to eq('#ERR')
+        expect(subject.process_token(tokens, ref_hash)).to eq('#ERR')
       end
     end
 
@@ -40,7 +41,7 @@ describe Evaluator do
 
       it 'should return 30' do
         allow(subject).to receive(:cell_array).and_return(cell_array)
-        expect(subject.process_token(tokens)).to eq(30)
+        expect(subject.process_token(tokens, ref_hash)).to eq(30)
       end
     end
 
@@ -50,7 +51,7 @@ describe Evaluator do
 
       it 'should return 10' do
         allow(subject).to receive(:cell_array).and_return(cell_array)
-        expect(subject.process_token(tokens)).to eq(10)
+        expect(subject.process_token(tokens, ref_hash)).to eq(10)
       end
     end
 
@@ -60,7 +61,7 @@ describe Evaluator do
 
       it 'should return #ERR' do
         allow(subject).to receive(:cell_array).and_return(cell_array)
-        expect(subject.process_token(tokens)).to eq('#ERR')
+        expect(subject.process_token(tokens, ref_hash)).to eq('#ERR')
       end
     end
 
@@ -70,7 +71,7 @@ describe Evaluator do
 
       it 'should return #ERR' do
         allow(subject).to receive(:cell_array).and_return(cell_array)
-        expect(subject.process_token(tokens)).to eq('#ERR')
+        expect(subject.process_token(tokens, ref_hash)).to eq('#ERR')
       end
     end
 
@@ -80,17 +81,27 @@ describe Evaluator do
 
       it 'should return 0' do
         allow(subject).to receive(:cell_array).and_return(cell_array)
-        expect(subject.process_token(tokens)).to eq(0)
+        expect(subject.process_token(tokens, ref_hash)).to eq(0)
       end
     end
 
     context 'when it is divided by 0' do
       let(:tokens) { ['/', '0', '2'] }
-      let(:cell_array) { [[['/', '0', '2'], ['-', '2', '12'], ['*', '3', 'a1']]] }
+      let(:cell_array) { [[['/', '0', '2'], ['-', '2', '12'], ['*', '3', 'b1']]] }
 
       it 'should return #ERR' do
         allow(subject).to receive(:cell_array).and_return(cell_array)
-        expect(subject.process_token(tokens)).to eq('#ERR')
+        expect(subject.process_token(tokens, ref_hash)).to eq('#ERR')
+      end
+    end
+
+    context 'when refering to an known value' do
+      let(:tokens) { ['*', '3', 'b1'] }
+      let(:cell_array) { [[['12'], ['*', '3', 'b1']]] }
+
+      it 'should return #ERR' do
+        allow(subject).to receive(:cell_array).and_return(cell_array)
+        expect(subject.process_token(tokens, ref_hash)).to eq('#ERR')
       end
     end
   end
@@ -108,25 +119,34 @@ describe Evaluator do
     context 'when there are multiple cells and error' do
       let(:cell_array) { [[['+', '2', '12'], ['*', '3', 'a1'], ['b2']]] }
       let(:result) { [[14, 42, '#ERR']] }
-      it 'should return 3 valid numbers' do
+      it 'should return #ERR for invalid cell' do
         allow(subject).to receive(:cell_array).and_return(cell_array)
         expect(subject.run).to eq(result)
       end
     end
 
-    context 'when there are multiple cells and error simbol' do
+    context 'when there are multiple cells and error symbol' do
       let(:cell_array) { [[['-', '12', '2'], ['*', '3', 'a']]] }
       let(:result) { [[-10, '#ERR']] }
-      it 'should return 3 valid numbers' do
+      it 'should return #ERR for the error symbol' do
         allow(subject).to receive(:cell_array).and_return(cell_array)
         expect(subject.run).to eq(result)
       end
     end
 
-    context 'when there are multiple cells and error simbol' do
-      let(:cell_array) { [[['-', '12', '2'], ['*', '3', 'a']]] }
-      let(:result) { [[-10, '#ERR']] }
-      it 'should return 3 valid numbers' do
+    context 'when there is a single cyclical reference ' do
+      let(:cell_array) { [[['a1']]] }
+      let(:result) { [['#ERR']] }
+      it 'should return #ERR' do
+        allow(subject).to receive(:cell_array).and_return(cell_array)
+        expect(subject.run).to eq(result)
+      end
+    end
+
+    context 'when there is a chained cyclical reference' do
+      let(:cell_array) { [[['b1'], ['c1'], ['a1'], ['e1'], ['+', '2', '12'], ['e1']]] }
+      let(:result) { [['#ERR', '#ERR', '#ERR', 14, 14, 14]] }
+      it 'should return #ERR' do
         allow(subject).to receive(:cell_array).and_return(cell_array)
         expect(subject.run).to eq(result)
       end
